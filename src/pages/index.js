@@ -49,13 +49,32 @@ export default function Home() {
         for (let item of part.items)
         {
           var queryFound = false;
+          var texts = [];
           for (let itemPageId of item.pages) {
             for (let page of jsonResponse[0].pages) {
                 if (page.id == itemPageId) {
                     for (let transcript of page.transcripts) {
                         if (transcript.itemID == item.id) {
-                          if (transcript.text.toLowerCase().search(inputText) > 0) {
-                              queryFound = true;
+                          // var searchIndex = transcript.text.toLowerCase().search(inputText);
+                          // if (searchIndex > -1) {
+                          //     queryFound = true;
+                          //     var sliceStart = Math.max([0,searchIndex-20]);
+                          //     var sliceEnd = Math.min([searchIndex+inputText.length+20,transcript.text.length]);
+                          //     texts.push({text: transcript.text, index: searchIndex});
+                          // }
+                          var transcriptText = transcript.text.toLowerCase();
+
+                          let searchIndices = [];
+                          let index = transcriptText.indexOf(inputText);
+
+                          while (index !== -1) {
+                            searchIndices.push(index);
+                            index = transcriptText.indexOf(inputText, index+1);
+                          }
+
+                          if (searchIndices.length > 0) {
+                            queryFound = true;
+                            texts.push("Page " + page.pageNumber);
                           }
                         }
                     }
@@ -71,12 +90,18 @@ export default function Home() {
             //console.log("coordsList.length before = " + coordsList.length);
 
             let markerTitle = "(no title)"
-            if ("title" in item) {
+            if ("title" in item && item.title !== "") {
               markerTitle = item.title;
             }
 
             var markerUrl = "https://www.duchas.ie/ga/cbes/"+part.id+"/"+item.firstPageID+"/";
-            var markerContent = <a href={markerUrl} target="_blank\">{markerTitle}</a>
+            var markerContent = 
+              <>
+                <h3><a href={markerUrl} target="_blank\">{markerTitle}</a></h3>
+                <ul>
+                  {texts.map((text, i) => (<li>{text}</li>))}
+                </ul>
+              </>
             tempMarkersList.push({coords: [coords.latitude + randomLatOffset, coords.longitude + randomLonOffset], content: markerContent});
           }
         }
