@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/c8950ff2-2eaf-47d2-b263-eccbff11e1fb/resourceGroups/mapai-cbes-rg/providers/Microsoft.Web/sites/mapai-cbes",
+    "appService.deploySubpath": "."
+}
