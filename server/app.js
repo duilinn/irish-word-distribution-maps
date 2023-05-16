@@ -1,78 +1,75 @@
-var mysql = require('mysql2');
+const express = require('express')
+var request = require('request')
+var cors = require('cors')
 const http = require("http");
 const querystring = require('node:querystring');
+const fs = require('fs');
+const { match } = require('assert');
 const PORT = process.env.PORT || 5000;
-const sqlPassword = require("./sqlPassword");
+const app = express()
+const port = 5000
 
-var con = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: sqlPassword,
-    database: "duchas_test"
+const filePath = 'public/volumes_simplified_full.json';
+let jsonData = {};
+
+// Read the JSON file
+fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+        console.error('Error reading the file:', err);
+        return;
+    }
+
+    try {
+        // Parse the JSON data
+        jsonData = JSON.parse(data);
+
+        // Access the data in the JSON object
+        console.log("number of volumes: " + jsonData.length +
+            " number of items in volume 0001: " + jsonData[0].length);
+    } catch (err) {
+        console.error('Error parsing the JSON data:', err);
+    }
 });
 
-var query = "iomarca";
+app.get('/api', cors(), function (req, res) {
+    const { params, query } = req;
 
-con.connect(function (err) {
-    if (err) throw err;
+    var queries = query.text;
+    var returnedItems = [];
+
+    if (typeof queries === 'string') {
+        console.log("query is a string");
+        queries = [query.text];
+    }
+
+    console.log("Queries:");
+    console.log(queries[0]);
 
 
-    const server = http.createServer(async (req, res) => {
-        const headers = {
-            'Access-Control-Allow-Origin': '*', /* @dev First, read about security */
-            'Access-Control-Allow-Methods': 'OPTIONS, POST, GET',
-            'Access-Control-Max-Age': 2592000, // 30 days
-            "Content-Type": "application/json"
-            /** add other headers as per requirement */
-        };
-
-        //set the request route
-        if (req.method === "GET") {
-            var queries = querystring.parse(req.url.slice(5,));
-
-            var sql = "SELECT * FROM bnas_test";
+    // You can now work with the parsed JSON data
+    console.log("query = " + queries);
+    for (let volume in jsonData) {
+        if ((volume % 100) == 0) console.log("Reading volume " + volume);
+        for (let item in jsonData[volume]) {
+            var matchesAnyQueries = false;
 
             for (let query in queries) {
-                // if (query=="title") sql += " title = \"" + ("title" in queries ? queries.title : "*" + "\"";
-                // if ("language" in queries) sql += " AND language = \"" + queries.language + "\"";
-                // if ("lat" in queries) sql += " AND lat = \"" + queries.lat + "\"";
-                // if ("lon" in queries) sql += " AND lon = " + queries.lon + "\"";
-                // if ("url" in queries) sql += " AND url = \"" + queries.url + "\"";
-                if (query == "text") {
-                    if (queries.text.length == 1) {
-                        sql += " WHERE text LIKE \"%" + queries.text + "%\"";
-                    } else {
-                        sql += " WHERE text LIKE \"%" + queries.text[0] + "%\"";
-                        for (var i = 1; i < queries.text.length; i++) {
-                            sql += " OR text LIKE \"%" + queries.text[i] + "%\"";
-                        }
-                    }
+
+                if (jsonData[volume][item].text.includes(queries[query])) {
+                    matchesAnyQueries = true;
                 }
             }
-            //console.log(queries);
-            sql += ";";
 
-            con.query(sql, function (err, result, fields) {
-                if (err) throw err;
-                //console.log("sql: " + sql);
-                res.writeHead(200, headers);
-                res.write("");
-                res.end(JSON.stringify(result));
-            });
+            if (matchesAnyQueries) {
+                returnedItems.push(jsonData[volume][item]);
+            }
         }
-
-        // If no route present
-        else {
-            res.writeHead(404, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "Route not found" }));
-        }
-    });
-
-    // 
-
-    server.listen(PORT, () => {
-        console.log(`server started on port: ${PORT}`);
-    });
-
+    }
+    console.log(returnedItems.length + " items found");
+    res.send(returnedItems);
 });
 
+
+app.listen(port, () => {
+    console.log(`Listening on port ${port}`)
+})

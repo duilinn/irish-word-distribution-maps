@@ -57,13 +57,15 @@ export default function Home() {
       }
       const initialData = await fetch(apiString);
       const jsonResponse = await initialData.json();
-      console.log(jsonResponse);
+      //console.log(jsonResponse);
+      //console.log("Frontend has received " + jsonResponse.length + " items");
       var tempMarkersList = [];
 
       for (let item of jsonResponse) {
+
         if (languagesIncluded[item.language]) {
           var foundQueries = [];
-
+          
           for (let queryIndex in inputTexts) {
             var transcriptText = item.text.toLowerCase();
 
@@ -82,7 +84,9 @@ export default function Home() {
             }
           }
 
-          if (foundQueries.length > 0 && "lat" in item && "lon" in item) {
+          if (foundQueries.length > 0 && "coordinates" in item &&
+            (typeof item.coordinates[0] == "number") &&
+            (typeof item.coordinates[1] == "number")) {
             //console.log(item.coordinates[0] + ", " + item.coordinates[1]);
             var randomLatOffset = (Math.random() - 0.5) * 0.001;
             var randomLonOffset = (Math.random() - 0.5) * 0.002;
@@ -106,7 +110,7 @@ export default function Home() {
             }
             tempMarkersList.push(
               {
-                coords: [item.lat + randomLatOffset, item.lon + randomLonOffset],
+                coords: [item.coordinates[0] + randomLatOffset, item.coordinates[1] + randomLonOffset],
                 content: markerContent, icon: markerIcon
               });
           }
@@ -179,8 +183,8 @@ export default function Home() {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution="&copy; <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
                 />
-                {console.log(languagesIncluded)
-                }
+                {/* {console.log(languagesIncluded)
+                } */}
                 {
                   markersList.map((currentMarker, i) => (
                     <Marker position={currentMarker.coords} key={i} icon={new L.DivIcon({
