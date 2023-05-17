@@ -12,11 +12,12 @@
   text-align: center;
   text-decoration: none;
   background-color: $color-green;
-  padding: 1em 1.4em;
+  padding: 0.5em 0.7em;
   border: 0;
   border-radius: .2em;
   cursor: pointer;
-
+  margin: 2px;
+  
   &:hover {
     background-color: lighten($color-green, 10);
   }

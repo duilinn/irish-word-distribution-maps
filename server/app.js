@@ -7,7 +7,8 @@ const fs = require('fs');
 const { match } = require('assert');
 const PORT = process.env.PORT || 5000;
 const app = express()
-const port = 5000
+const port = PORT;//5000
+app.use(cors());
 
 const filePath = 'public/volumes_simplified_full.json';
 let jsonData = {};
@@ -32,9 +33,13 @@ fs.readFile(filePath, 'utf8', (err, data) => {
 });
 
 app.get('/api', cors(), function (req, res) {
+    res.set('Access-Control-Allow-Origin', '*');
     const { params, query } = req;
 
     var queries = query.text;
+
+    var useRegex = query.regex;
+
     var returnedItems = [];
 
     if (typeof queries === 'string') {
@@ -43,20 +48,36 @@ app.get('/api', cors(), function (req, res) {
     }
 
     console.log("Queries:");
-    console.log(queries[0]);
+    console.log(queries);
+
+    console.log("useRegex = " + useRegex);
 
 
     // You can now work with the parsed JSON data
     console.log("query = " + queries);
+
     for (let volume in jsonData) {
         if ((volume % 100) == 0) console.log("Reading volume " + volume);
         for (let item in jsonData[volume]) {
             var matchesAnyQueries = false;
 
-            for (let query in queries) {
+            for (let currentQuery in queries) {
+                if (queries[currentQuery].length > 0) {
 
-                if (jsonData[volume][item].text.includes(queries[query])) {
-                    matchesAnyQueries = true;
+                    if (useRegex == "true") {
+                        const regex = new RegExp(queries[currentQuery]);
+                        const isMatch = regex.test(jsonData[volume][item].text);
+                        if (isMatch) {
+                            //console.log("match found");
+                            matchesAnyQueries = true;
+                        }
+                    }
+                    else {
+                        if (jsonData[volume][item].text.includes(queries[currentQuery])) {
+                            //console.log("match found");
+                            matchesAnyQueries = true;
+                        }
+                    }
                 }
             }
 
@@ -64,6 +85,8 @@ app.get('/api', cors(), function (req, res) {
                 returnedItems.push(jsonData[volume][item]);
             }
         }
+
+
     }
     console.log(returnedItems.length + " items found");
     res.send(returnedItems);

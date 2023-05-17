@@ -19,3 +19,30 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/* Apply CSS styles to the body and container div */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  display: flex;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+}
+
+/* Style the left and right divs */
+.left-div {
+  flex: 0 0 30%;
+  /* Take up 30% of the available space */
+  background-color: #ffffff;
+}
+
+.right-div {
+  flex: 0 0 70%;
+  margin: 0px;
+  padding: 0px;
+  /* Take up 70% of the available space */
+}
