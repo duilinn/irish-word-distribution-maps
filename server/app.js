@@ -35,61 +35,75 @@ fs.readFile(filePath, 'utf8', (err, data) => {
 app.get('/api', cors(), function (req, res) {
     res.set('Access-Control-Allow-Origin', '*');
     const { params, query } = req;
+    console.log(query);
 
-    var queries = query.text;
+    if ("text" in query && query.text != '') {
+        var useRegex = (query.regex === "true");
+        var queries = [];
+        var returnedItems = [];
 
-    var useRegex = query.regex;
+        //if there is only a single query, turn it into an array of length 1
+        if (typeof query.text === 'string') {
+            console.log("query is a string");
+            queries.push(query.text);
+        } else {
+            queries = query.text;
+        }
 
-    var returnedItems = [];
+        console.log("Queries before accounting for regex:");
+        console.log(queries);
+        if (!useRegex) {
+            console.log("Adding word boundaries");
+            queries = queries.map((q) => (
+                "\\b" + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\b"
+            ));
+        }
 
-    if (typeof queries === 'string') {
-        console.log("query is a string");
-        queries = [query.text];
-    }
+        console.log("Queries:");
+        console.log(queries);
 
-    console.log("Queries:");
-    console.log(queries);
-
-    console.log("useRegex = " + useRegex);
+        console.log("useRegex = " + useRegex);
 
 
-    // You can now work with the parsed JSON data
-    console.log("query = " + queries);
+        // You can now work with the parsed JSON data
+        console.log("query = " + queries);
 
-    for (let volume in jsonData) {
-        if ((volume % 100) == 0) console.log("Reading volume " + volume);
-        for (let item in jsonData[volume]) {
-            var matchesAnyQueries = false;
+        for (let volume in jsonData) {
+            if ((volume % 100) == 0) console.log("Reading volume " + volume);
+            for (let item in jsonData[volume]) {
+                var matchesAnyQueries = false;
 
-            for (let currentQuery in queries) {
-                if (queries[currentQuery].length > 0) {
-
-                    if (useRegex == "true") {
-                        const regex = new RegExp(queries[currentQuery]);
-                        const isMatch = regex.test(jsonData[volume][item].text);
+                for (let currentQuery in queries) {
+                    //console.log("currentQuery = " + currentQuery);
+                    if (queries[currentQuery].length > 0) {
+                        const regex = new RegExp(queries[currentQuery].toLowerCase());
+                        const isMatch = regex.test(jsonData[volume][item].text.toLowerCase());
                         if (isMatch) {
                             //console.log("match found");
                             matchesAnyQueries = true;
                         }
+                        // else {
+                        //     if (jsonData[volume][item].text.includes(queries[currentQuery])) {
+                        //         //console.log("match found");
+                        //         matchesAnyQueries = true;
+                        //     }
+                        // }
                     }
-                    else {
-                        if (jsonData[volume][item].text.includes(queries[currentQuery])) {
-                            //console.log("match found");
-                            matchesAnyQueries = true;
-                        }
-                    }
+                }
+
+                if (matchesAnyQueries) {
+                    returnedItems.push(jsonData[volume][item]);
                 }
             }
 
-            if (matchesAnyQueries) {
-                returnedItems.push(jsonData[volume][item]);
-            }
+
         }
-
-
+        console.log(returnedItems.length + " items found");
+        res.send(returnedItems);
+    } else {
+        console.log("No query given.");
+        res.send([]);
     }
-    console.log(returnedItems.length + " items found");
-    res.send(returnedItems);
 });
 
 

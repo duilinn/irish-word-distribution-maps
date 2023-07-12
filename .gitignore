@@ -37,3 +37,7 @@ yarn-error.log*
 /server/public/volumes*/
 *.bat
 /server/sqlPassword.js
+
+#ignoring .next (large files)
+/client/.next/
+/client/public/gaeltacht*
