@@ -292,10 +292,10 @@ export default function Home() {
 
                     {/* {showGaeltacht1776 && <GeoJSON data={gaeltacht1776} color="#008000" fill={false} />}
                     {showGaeltacht1800 && <GeoJSON data={gaeltacht1800} color="#004000" fill={false} />} */}
-                    {showGaeltacht1841 && <GeoJSON data={gaeltacht1841} color="#400040" weight={2} fill={false} />}
-                    {showGaeltacht1926 && <GeoJSON data={gaeltacht1926} color="#800080" weight={2} fill={false} />}
-                    {showGaeltacht1956 && <GeoJSON data={gaeltacht1956} color="#ff00ff" weight={2} fill={false} />}
-                    {showCounties && <GeoJSON data={counties} color="#000000" weight={1} fill={false} />}
+                    {showGaeltacht1841 && <GeoJSON data={gaeltacht1841} color="#800080" weight={1} fill={false} fillColor="#ffff00" fillOpacity={0.1} />}
+                    {showGaeltacht1926 && <GeoJSON data={gaeltacht1926} color="#a0a0a0" weight={1} fill={true} fillColor="#ff8000" fillOpacity={0.1} fillRule="nonzero"/>}
+                    {showGaeltacht1956 && <GeoJSON data={gaeltacht1956} color="#a0a0a0" weight={1} fill={true} fillColor="#ffff00" fillOpacity={0.4}/>}
+                    {showCounties && <GeoJSON data={counties} color="#404080" weight={1} fill={false}/>}
                   </>
                 )}
               </Map>
