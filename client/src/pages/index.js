@@ -44,7 +44,6 @@ export default function Home() {
   const [showCounties, setShowCounties] = useState(false);
 
   const [numberOfResultsInfo, setNumberOfResultsInfo] = useState("");
-  var languagesIncluded = { "en": includeEnglish, "ga": includeIrish, "mixed": includeMixed };
 
   function SearchBar({
     inputText,
@@ -72,8 +71,8 @@ export default function Home() {
     if (window.location.search.length > 0) {
       for (let c in currentPV) {
         var pv = currentPV[c].split("=");
-        currentParams.push(pv[0]);
-        currentValues.push(pv[1]);
+        currentParams.push(decodeURIComponent(pv[0]));
+        currentValues.push(decodeURIComponent(pv[1]));
       }
     }
 
@@ -111,9 +110,10 @@ export default function Home() {
 
     for (let c in newParams) {
       if (c == 0) urlString += "?"; else urlString += "&";
-      urlString += newParams[c];
+      urlString += (newParams[c]);
       urlString += "=";
-      urlString += newValues[c];
+      urlString += (newValues[c]);
+      //encodeURIComponent()
     }
     // console.log(`urlString = ${urlString}`);
     // window.location.search = urlString;
@@ -171,56 +171,103 @@ export default function Home() {
 
     for (let c in newParams) {
       if (c == 0) urlString += "?"; else urlString += "&";
-      urlString += newParams[c];
+      urlString += encodeURIComponent(newParams[c]);
       urlString += "=";
-      urlString += newValues[c];
+      urlString += encodeURIComponent(newValues[c]);
     }
     // console.log(`urlString = ${urlString}`);
     // window.location.search = urlString;
     window.history.replaceState("", "", urlString);
   }
 
-  function searchVolumes() {
-    async function getVolumes(volumeNumber) {
+  function searchVolumes(inputs = [], re = "", useEn = "", useGa = "", useMixed = "") {
+    async function getVolumes(inputArray = [], r = "", uE = "", uG = "", uM = "") {
+
+      var inputs = []
+      if (inputArray.length > 0) inputs = inputArray.slice();
+      else inputs = inputTexts;
+
       var apiString =
         "https://2-dot-spatial-tempo-386114.ew.r.appspot.com/api?text=";
-      apiString += inputTexts[0];
+      apiString += inputs[0];
       //"http://localhost:5000/api?text="
-      if (inputTexts.length > 1) {
-        for (var i = 1; i < inputTexts.length; i++) {
-          if (inputTexts[i] != "") {
-            apiString += "&text=" + inputTexts[i];
+      if (inputs.length > 1) {
+        for (var i = 1; i < inputs.length; i++) {
+          if (inputs[i] != "") {
+            apiString += "&text=" + inputs[i];
           }
         }
       }
 
-      if (useRegex) {
+      var re = useRegex;
+
+      if (r == "true") {
+        re = true;
+      } else if (r == "false") {
+        re = false;
+      }
+
+      var useEnglish = includeEnglish;
+
+      if (uE == "true") {
+        useEnglish = true;
+      } else if (uE == "false") {
+        useEnglish = false;
+      }
+
+      var useIrish = includeIrish;
+
+      if (uG == "true") {
+        useIrish = true;
+      } else if (uG == "false") {
+        useIrish = false;
+        console.log(`set useIrish to false: ${useIrish}`);
+      }
+      console.log(`uG = ${uG == false}`);
+
+      var useMixed = includeMixed;
+
+      if (uM == "true") {
+        useMixed = true;
+      } else if (uM == "false") {
+        useMixed = false;
+      }
+
+
+      if (re == true) {
         apiString += "&regex=true";
       } else {
         apiString += "&regex=false";
       }
 
+      console.log(`regex = ${re}`);
+
+      console.log(`searching with api string ${apiString}`);
+      console.log(`Searching with languages ${useEn}, ${useGa}`);
       const initialData = await fetch(apiString);
       const jsonResponse = await initialData.json();
       // console.log(jsonResponse);
       console.log("Frontend has received " + jsonResponse.length + " items");
       var tempMarkersList = [];
 
+      var languagesIncluded = { "en": useEnglish, "ga": useIrish, "mixed": useMixed };
+
       for (let item of jsonResponse) {
 
         if (languagesIncluded[item.language]) {
+          console.log(`language included = ${item.language} since it is in ${languagesIncluded[item.language]}, languagesIncluded["ga"] = ${languagesIncluded["ga"]}, useIrish = ${useIrish}`);
           var foundQueries = [];
 
-          for (let queryIndex in inputTexts) {
+          for (let queryIndex in inputs) {
             var transcriptText = item.text.toLowerCase();
             // console.log("using regex = " + useRegex);
 
             var textToUse = "";
 
-            if (useRegex == true) {
-              textToUse = inputTexts[queryIndex];
+            if (re == true) {
+              textToUse = inputs[queryIndex];
             } else {
-              textToUse = "\\b" + inputTexts[queryIndex].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\b";
+              textToUse = "\\b" + inputs[queryIndex].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\b";
             }
             const regex = new RegExp(textToUse.toLowerCase());
 
@@ -231,11 +278,11 @@ export default function Home() {
               }
             }
             // let searchIndices = [];
-            // let index = transcriptText.indexOf(inputTexts[queryIndex]);
+            // let index = transcriptText.indexOf(inputs[queryIndex]);
 
             // while (index !== -1) {
             //   searchIndices.push(index);
-            //   index = transcriptText.indexOf(inputTexts[queryIndex], index + 1);
+            //   index = transcriptText.indexOf(inputs[queryIndex], index + 1);
             // }
 
             // if (searchIndices.length > 0) {
@@ -260,7 +307,7 @@ export default function Home() {
             var markerContent =
               <>
                 <h3><a href={item.url} target="_blank\">{markerTitle}</a></h3>
-                {foundQueries.map((f) => (<div>{inputTexts[f]}</div>))}
+                {foundQueries.map((f) => (<div>{inputs[f]}</div>))}
               </>
 
             foundQueries.sort();
@@ -285,7 +332,7 @@ export default function Home() {
     (async function () {
       var allCoords = [];
       //console.log("Fetching volume " + item);
-      var fetchedItem = await getVolumes();
+      var fetchedItem = await getVolumes(inputs, re, useEn, useGa, useMixed);
       //console.log("Volume " + item + ": " + fetchedItem.length + " points found for " + inputTexts);
       allCoords.push([...fetchedItem]);
       //console.log("All volumes: " + allCoords.flat(1).length + " points found for " + inputTexts);
@@ -305,45 +352,59 @@ export default function Home() {
 
     // console.log("getting values from URL");
 
+    var newInputTexts = [];
+
     if (currentParams.indexOf("q") > -1) {
       // console.log("page loaded with queries");
 
       var q = getAllIndexes(currentParams, "q");
 
-      var newInputTexts = [];
+
       for (var i = 0; i < q.length; i++) {
         newInputTexts.push(currentValues[q[i]]);
       }
 
       setInputTexts(newInputTexts);
     }
+    var useEn = "false";
+    if (currentParams.indexOf("en") > -1) {
+      setIncludeEnglish(true);
+      useEn = "true";
+    }
+    var useGa = "true";
+    if (currentParams.indexOf("ga") > -1) {
+      setIncludeIrish(false);
+      useGa = "false";
+    }
+    var useMixed = "false";
+    if (currentParams.indexOf("mix") > -1) {
+      setIncludeMixed(true);
+      useMixed = "true";
+    }
+    var useRe = "false";
+    if (currentParams.indexOf("re") > -1) {
+      setUseRegex(true);
+      useRe = "true";
+    }
+    console.log(`useRe set to ${useRe}`);
 
-    if (currentParams.indexOf("en") > 0) {
-      setIncludeEnglish(true);
+    if (currentParams.indexOf("co") > -1) {
+      setShowCounties(true);
     }
-    if (currentParams.indexOf("ga") > 0) {
-      setIncludeEnglish(false);
+    if (currentParams.indexOf("g1") > -1) {
+      setShowGaeltacht1841(true);
     }
-    if (currentParams.indexOf("mix") > 0) {
-      setIncludeEnglish(true);
+    if (currentParams.indexOf("g2") > -1) {
+      setShowGaeltacht1926(true);
     }
-    if (currentParams.indexOf("re") > 0) {
-      setIncludeEnglish(true);
-    }
-    if (currentParams.indexOf("co") > 0) {
-      setIncludeEnglish(true);
-    }
-    if (currentParams.indexOf("g1") > 0) {
-      setIncludeEnglish(true);
-    }
-    if (currentParams.indexOf("g2") > 0) {
-      setIncludeEnglish(true);
-    }
-    if (currentParams.indexOf("g3") > 0) {
-      setIncludeEnglish(true);
+    if (currentParams.indexOf("g3") > -1) {
+      setShowGaeltacht1956(true);
     }
 
-    searchVolumes();
+    // const timerId = setTimeout(() => { searchVolumes(newInputTexts, "true") }, 1000);
+    // return () => clearTimeout(timerId);
+    console.log(`Searching with: ${useEn}, ${useGa}`);
+    searchVolumes(newInputTexts, useRe, useEn, useGa, useMixed);
   }, []);
   var x = [];
   for (var i = 0; i < inputTexts.length; i++) {
@@ -379,7 +440,7 @@ export default function Home() {
             </table>
             <Button disabled={!(inputTexts.length > 1)} onClick={(e) => { e.preventDefault(); if (inputTexts.length > 1) setInputTexts(previousInputTexts => [...previousInputTexts.slice(0, -1)]) }}>-</Button>
             <Button disabled={!(inputTexts.length < maxNumberOfQueries)} onClick={(e) => { e.preventDefault(); if (inputTexts.length < maxNumberOfQueries) setInputTexts(previousInputTexts => [...previousInputTexts, ""]) }}>+</Button>
-            <Button onClick={(e) => { e.preventDefault();; setURLTexts(inputTexts); searchVolumes() }}>Search</Button>
+            <Button onClick={(e) => { e.preventDefault(); setURLTexts(inputTexts); searchVolumes() }}>Search</Button>
             <div style={{ margin: "5px", padding: "5px", alignItems: "center" }}>
               Include results in:
               <br />
