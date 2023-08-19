@@ -61,6 +61,125 @@ export default function Home() {
     );
   }
 
+
+
+  function getURLParams() {
+    var currentPV = window.location.search.slice(1,).split("&");
+
+    var currentParams = [];
+    var currentValues = [];
+
+    if (window.location.search.length > 0) {
+      for (let c in currentPV) {
+        var pv = currentPV[c].split("=");
+        currentParams.push(pv[0]);
+        currentValues.push(pv[1]);
+      }
+    }
+
+    return [currentParams, currentValues];
+  }
+
+  function setURLParam(param, value) {
+    var currentParams = [];
+    var currentValues = [];
+
+    [currentParams, currentValues] = getURLParams();
+
+    // console.log(currentParams);
+    // console.log(currentValues);
+    var newParams = currentParams.slice();
+    var newValues = currentValues.slice();
+
+    if (value != "") {
+      if (currentParams.indexOf(param) > -1) {
+        newValues[currentParams.indexOf(param)] = value;
+      } else {
+        newParams.push(param);
+        newValues.push(value);
+      }
+    } else {
+      var indexToRemove = currentParams.indexOf(param);
+
+      if (indexToRemove > -1) {
+        newParams.splice(indexToRemove, 1);
+        newValues.splice(indexToRemove, 1);
+      }
+    }
+
+    var urlString = "/"
+
+    for (let c in newParams) {
+      if (c == 0) urlString += "?"; else urlString += "&";
+      urlString += newParams[c];
+      urlString += "=";
+      urlString += newValues[c];
+    }
+    // console.log(`urlString = ${urlString}`);
+    // window.location.search = urlString;
+    window.history.replaceState("", "", urlString);
+  }
+
+  function toggleURLParam(param, onByDefault = false) {
+    if (!onByDefault) {
+      var [currentParams, currentValues] = getURLParams();
+      if (currentParams.indexOf(param) > -1) {
+        setURLParam(param, "");
+      } else {
+        setURLParam(param, "1");
+      }
+    }
+    else {
+      var [currentParams, currentValues] = getURLParams();
+      // console.log("toggling ga");
+      console.log(`${currentParams.indexOf(param)}`);
+      if (currentParams.indexOf(param) == -1) {
+        // console.log("turn ga off");
+        setURLParam(param, "0");
+      } else {
+        // console.log("turn ga on");
+        setURLParam(param, "");
+      }
+    }
+  }
+
+  function getAllIndexes(arr, val) {
+    var indexes = [], i = -1;
+    while ((i = arr.indexOf(val, i + 1)) != -1) {
+      indexes.push(i);
+    }
+    return indexes;
+  }
+
+  function setURLTexts(texts) {
+    // console.log(`texts = ${texts}`);
+    var [currentParams, currentValues] = getURLParams();
+
+    var newParams = currentParams.slice();
+    var newValues = currentValues.slice();
+
+    var qIndexes = getAllIndexes(currentParams, "q");
+
+    for (var i = qIndexes.length - 1; i >= 0; i--) {
+      newParams.splice(qIndexes[i], 1);
+      newValues.splice(qIndexes[i], 1);
+    }
+
+    texts.map((t, i) => { newParams.push("q"); newValues.push(t) });
+
+    var urlString = "/"
+
+    for (let c in newParams) {
+      if (c == 0) urlString += "?"; else urlString += "&";
+      urlString += newParams[c];
+      urlString += "=";
+      urlString += newValues[c];
+    }
+    // console.log(`urlString = ${urlString}`);
+    // window.location.search = urlString;
+    window.history.replaceState("", "", urlString);
+  }
+
   function searchVolumes() {
     async function getVolumes(volumeNumber) {
       var apiString =
@@ -83,7 +202,7 @@ export default function Home() {
 
       const initialData = await fetch(apiString);
       const jsonResponse = await initialData.json();
-      console.log(jsonResponse);
+      // console.log(jsonResponse);
       console.log("Frontend has received " + jsonResponse.length + " items");
       var tempMarkersList = [];
 
@@ -94,7 +213,7 @@ export default function Home() {
 
           for (let queryIndex in inputTexts) {
             var transcriptText = item.text.toLowerCase();
-            console.log("using regex = " + useRegex);
+            // console.log("using regex = " + useRegex);
 
             var textToUse = "";
 
@@ -175,7 +294,55 @@ export default function Home() {
 
 
   }
+  const [isBrowser, setIsBrowser] = useState(false);
   useEffect(() => {
+    setIsBrowser(typeof window !== "undefined");
+
+    var currentParams = [];
+    var currentValues = [];
+
+    [currentParams, currentValues] = getURLParams();
+
+    // console.log("getting values from URL");
+
+    if (currentParams.indexOf("q") > -1) {
+      // console.log("page loaded with queries");
+
+      var q = getAllIndexes(currentParams, "q");
+
+      var newInputTexts = [];
+      for (var i = 0; i < q.length; i++) {
+        newInputTexts.push(currentValues[q[i]]);
+      }
+
+      setInputTexts(newInputTexts);
+    }
+
+    if (currentParams.indexOf("en") > 0) {
+      setIncludeEnglish(true);
+    }
+    if (currentParams.indexOf("ga") > 0) {
+      setIncludeEnglish(false);
+    }
+    if (currentParams.indexOf("mix") > 0) {
+      setIncludeEnglish(true);
+    }
+    if (currentParams.indexOf("re") > 0) {
+      setIncludeEnglish(true);
+    }
+    if (currentParams.indexOf("co") > 0) {
+      setIncludeEnglish(true);
+    }
+    if (currentParams.indexOf("g1") > 0) {
+      setIncludeEnglish(true);
+    }
+    if (currentParams.indexOf("g2") > 0) {
+      setIncludeEnglish(true);
+    }
+    if (currentParams.indexOf("g3") > 0) {
+      setIncludeEnglish(true);
+    }
+
     searchVolumes();
   }, []);
   var x = [];
@@ -184,15 +351,15 @@ export default function Home() {
   }
 
 
-  return (
+  return isBrowser ? (
     <Layout>
       <Head>
         <title>Dúchas maps</title>
         <meta name="description" content="Maps based on Dúchas.ie data" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div class="container">
-        <div class="left-div">
+      <div className="container">
+        <div className="left-div">
           <form>
             <table>
               <tbody>
@@ -201,7 +368,7 @@ export default function Home() {
                     <input
                       type="text"
                       value={inputTexts[i]} placeholder={"Word " + (i + 1)}
-                      onChange={(e) => setInputTexts(previousInputTexts => [...previousInputTexts.slice(0, i), e.target.value, ...previousInputTexts.slice(i + 1)])} />
+                      onChange={(e) => { setInputTexts(previousInputTexts => [...previousInputTexts.slice(0, i), e.target.value, ...previousInputTexts.slice(i + 1)]) }} />
                   </td>
                   <td style={{ color: markerColours[i % 10] }}>&nbsp;&nbsp;{markerSymbols[i % 10]}&nbsp;&nbsp;</td>
                   <td style={{ width: "50em", color: markerColours[i % 10], textAlign: "left" }}>{inputText}
@@ -212,43 +379,43 @@ export default function Home() {
             </table>
             <Button disabled={!(inputTexts.length > 1)} onClick={(e) => { e.preventDefault(); if (inputTexts.length > 1) setInputTexts(previousInputTexts => [...previousInputTexts.slice(0, -1)]) }}>-</Button>
             <Button disabled={!(inputTexts.length < maxNumberOfQueries)} onClick={(e) => { e.preventDefault(); if (inputTexts.length < maxNumberOfQueries) setInputTexts(previousInputTexts => [...previousInputTexts, ""]) }}>+</Button>
-            <Button onClick={(e) => { e.preventDefault(); searchVolumes() }}>Search</Button>
+            <Button onClick={(e) => { e.preventDefault();; setURLTexts(inputTexts); searchVolumes() }}>Search</Button>
             <div style={{ margin: "5px", padding: "5px", alignItems: "center" }}>
               Include results in:
               <br />
-              <input class="bigger-checkbox" type="checkbox" onChange={(e) => setIncludeEnglish(!includeEnglish)} checked={includeEnglish} />
+              <input className="bigger-checkbox" type="checkbox" onChange={(e) => { { } setIncludeEnglish(!includeEnglish); toggleURLParam("en") }} checked={includeEnglish} />
               &nbsp;English
               &nbsp;&nbsp;
-              <input class="bigger-checkbox" type="checkbox" onChange={(e) => setIncludeIrish(!includeIrish)} checked={includeIrish} />
+              <input className="bigger-checkbox" type="checkbox" onChange={(e) => { setIncludeIrish(!includeIrish); toggleURLParam("ga", true) }} checked={includeIrish} />
               &nbsp;Irish
               &nbsp;&nbsp;
-              <input class="bigger-checkbox" type="checkbox" onChange={(e) => setIncludeMixed(!includeMixed)} checked={includeMixed} />
+              <input className="bigger-checkbox" type="checkbox" onChange={(e) => { setIncludeMixed(!includeMixed); toggleURLParam("mix") }} checked={includeMixed} />
               &nbsp;Mixed
               <br />
               <br />
-              <input class="bigger-checkbox" type="checkbox" onChange={(e) => setUseRegex(!useRegex)} checked={useRegex} />
+              <input className="bigger-checkbox" type="checkbox" onChange={(e) => { setUseRegex(!useRegex); toggleURLParam("re") }} checked={useRegex} />
               &nbsp;Use regular expressions (advanced)
               <br />
               <br />
-              <input class="bigger-checkbox" type="checkbox" onChange={(e) => setShowCounties(!showCounties)} checked={showCounties} />
+              <input className="bigger-checkbox" type="checkbox" onChange={(e) => { setShowCounties(!showCounties); toggleURLParam("co") }} checked={showCounties} />
               &nbsp;Show county outlines
               <br />
               <br />
               Show Gaeltacht boundaries from:
               <br />
-              {/* <input class="bigger-checkbox" type="checkbox" onChange={(e) => setShowGaeltacht1776(!showGaeltacht1776)} checked={showGaeltacht1776} />
+              {/* <input className="bigger-checkbox" type="checkbox" onChange={(e) => setShowGaeltacht1776(!showGaeltacht1776)} checked={showGaeltacht1776} />
               &nbsp;Late 1700s
               &nbsp;&nbsp;
-              <input class="bigger-checkbox" type="checkbox" onChange={(e) => setShowGaeltacht1800(!showGaeltacht1800)} checked={showGaeltacht1800} />
+              <input className="bigger-checkbox" type="checkbox" onChange={(e) => setShowGaeltacht1800(!showGaeltacht1800)} checked={showGaeltacht1800} />
               &nbsp;c. 1800
               &nbsp;&nbsp; */}
-              <input class="bigger-checkbox" type="checkbox" onChange={(e) => setShowGaeltacht1841(!showGaeltacht1841)} checked={showGaeltacht1841} />
+              <input className="bigger-checkbox" type="checkbox" onChange={(e) => { setShowGaeltacht1841(!showGaeltacht1841); toggleURLParam("g1") }} checked={showGaeltacht1841} />
               &nbsp;c. 1840
               &nbsp;&nbsp;
-              <input class="bigger-checkbox" type="checkbox" onChange={(e) => setShowGaeltacht1926(!showGaeltacht1926)} checked={showGaeltacht1926} />
+              <input className="bigger-checkbox" type="checkbox" onChange={(e) => { setShowGaeltacht1926(!showGaeltacht1926); toggleURLParam("g2") }} checked={showGaeltacht1926} />
               &nbsp;1926
               &nbsp;&nbsp;
-              <input class="bigger-checkbox" type="checkbox" onChange={(e) => setShowGaeltacht1956(!showGaeltacht1956)} checked={showGaeltacht1956} />
+              <input className="bigger-checkbox" type="checkbox" onChange={(e) => { setShowGaeltacht1956(!showGaeltacht1956); toggleURLParam("g3") }} checked={showGaeltacht1956} />
               &nbsp;1956 (current)
             </div>
 
@@ -261,12 +428,13 @@ export default function Home() {
             <br />
             <div style={{ maxWidth: "40%", wordWrap: "break-word" }}>Note: Searching common English words will return a lot of results, which may slow down your computer.</div>
             <br />
-            <div id="1">Made using React, Node.js and Leaflet.</div>
+            <div key="1">Made using React, Node.js and Leaflet.</div>
             <br />
-            <div id="2">© 2023 National Folklore Collection, UCD</div>
+            <div key="2">© 2023 National Folklore Collection, UCD</div>
+            {/* {window.location.search} */}
           </div>
         </div>
-        <div class="right-div">
+        <div className="right-div">
           <Section>
             <Container>
               <Map className={styles.homeMap} width="750" height="500" center={DEFAULT_CENTER} zoom={7}>
@@ -293,9 +461,9 @@ export default function Home() {
                     {/* {showGaeltacht1776 && <GeoJSON data={gaeltacht1776} color="#008000" fill={false} />}
                     {showGaeltacht1800 && <GeoJSON data={gaeltacht1800} color="#004000" fill={false} />} */}
                     {showGaeltacht1841 && <GeoJSON data={gaeltacht1841} color="#800080" weight={1} fill={false} fillColor="#ffff00" fillOpacity={0.1} />}
-                    {showGaeltacht1926 && <GeoJSON data={gaeltacht1926} color="#a0a0a0" weight={1} fill={true} fillColor="#ff8000" fillOpacity={0.1} fillRule="nonzero"/>}
-                    {showGaeltacht1956 && <GeoJSON data={gaeltacht1956} color="#a0a0a0" weight={1} fill={true} fillColor="#ffff00" fillOpacity={0.4}/>}
-                    {showCounties && <GeoJSON data={counties} color="#404080" weight={1} fill={false}/>}
+                    {showGaeltacht1926 && <GeoJSON data={gaeltacht1926} color="#a0a0a0" weight={1} fill={true} fillColor="#ff8000" fillOpacity={0.1} fillRule="nonzero" />}
+                    {showGaeltacht1956 && <GeoJSON data={gaeltacht1956} color="#a0a0a0" weight={1} fill={true} fillColor="#ffff00" fillOpacity={0.4} />}
+                    {showCounties && <GeoJSON data={counties} color="#404080" weight={1} fill={false} />}
                   </>
                 )}
               </Map>
@@ -304,5 +472,5 @@ export default function Home() {
         </div>
       </div>
     </Layout>
-  )
+  ) : null;
 }
