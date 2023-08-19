@@ -132,12 +132,12 @@ export default function Home() {
     else {
       var [currentParams, currentValues] = getURLParams();
       // console.log("toggling ga");
-      console.log(`${currentParams.indexOf(param)}`);
+      //console.log(`${currentParams.indexOf(param)}`);
       if (currentParams.indexOf(param) == -1) {
-        // console.log("turn ga off");
+        // //console.log("turn ga off");
         setURLParam(param, "0");
       } else {
-        // console.log("turn ga on");
+        // //console.log("turn ga on");
         setURLParam(param, "");
       }
     }
@@ -152,7 +152,7 @@ export default function Home() {
   }
 
   function setURLTexts(texts) {
-    // console.log(`texts = ${texts}`);
+    // //console.log(`texts = ${texts}`);
     var [currentParams, currentValues] = getURLParams();
 
     var newParams = currentParams.slice();
@@ -175,7 +175,7 @@ export default function Home() {
       urlString += "=";
       urlString += encodeURIComponent(newValues[c]);
     }
-    // console.log(`urlString = ${urlString}`);
+    // //console.log(`urlString = ${urlString}`);
     // window.location.search = urlString;
     window.history.replaceState("", "", urlString);
   }
@@ -221,9 +221,9 @@ export default function Home() {
         useIrish = true;
       } else if (uG == "false") {
         useIrish = false;
-        console.log(`set useIrish to false: ${useIrish}`);
+        //console.log(`set useIrish to false: ${useIrish}`);
       }
-      console.log(`uG = ${uG == false}`);
+      //console.log(`uG = ${uG == false}`);
 
       var useMixed = includeMixed;
 
@@ -240,10 +240,10 @@ export default function Home() {
         apiString += "&regex=false";
       }
 
-      console.log(`regex = ${re}`);
+      //console.log(`regex = ${re}`);
 
-      console.log(`searching with api string ${apiString}`);
-      console.log(`Searching with languages ${useEn}, ${useGa}`);
+      //console.log(`searching with api string ${apiString}`);
+      //console.log(`Searching with languages ${useEn}, ${useGa}`);
       const initialData = await fetch(apiString);
       const jsonResponse = await initialData.json();
       // console.log(jsonResponse);
@@ -255,12 +255,12 @@ export default function Home() {
       for (let item of jsonResponse) {
 
         if (languagesIncluded[item.language]) {
-          console.log(`language included = ${item.language} since it is in ${languagesIncluded[item.language]}, languagesIncluded["ga"] = ${languagesIncluded["ga"]}, useIrish = ${useIrish}`);
+          //console.log(`language included = ${item.language} since it is in ${languagesIncluded[item.language]}, languagesIncluded["ga"] = ${languagesIncluded["ga"]}, useIrish = ${useIrish}`);
           var foundQueries = [];
 
           for (let queryIndex in inputs) {
             var transcriptText = item.text.toLowerCase();
-            // console.log("using regex = " + useRegex);
+            // //console.log("using regex = " + useRegex);
 
             var textToUse = "";
 
@@ -295,7 +295,7 @@ export default function Home() {
           if (foundQueries.length > 0 && "coordinates" in item &&
             (typeof item.coordinates[0] == "number") &&
             (typeof item.coordinates[1] == "number")) {
-            //console.log(item.coordinates[0] + ", " + item.coordinates[1]);
+            ////console.log(item.coordinates[0] + ", " + item.coordinates[1]);
             var randomLatOffset = (Math.random() - 0.5) * 0.001;
             var randomLonOffset = (Math.random() - 0.5) * 0.002;
 
@@ -324,18 +324,18 @@ export default function Home() {
           }
         }
       }
-      console.log("Number of markers recieved: " + tempMarkersList.length);
+      //console.log("Number of markers recieved: " + tempMarkersList.length);
       setNumberOfResultsInfo(tempMarkersList.length + " total results found.");
       return tempMarkersList;
     };
 
     (async function () {
       var allCoords = [];
-      //console.log("Fetching volume " + item);
+      ////console.log("Fetching volume " + item);
       var fetchedItem = await getVolumes(inputs, re, useEn, useGa, useMixed);
-      //console.log("Volume " + item + ": " + fetchedItem.length + " points found for " + inputTexts);
+      ////console.log("Volume " + item + ": " + fetchedItem.length + " points found for " + inputTexts);
       allCoords.push([...fetchedItem]);
-      //console.log("All volumes: " + allCoords.flat(1).length + " points found for " + inputTexts);
+      ////console.log("All volumes: " + allCoords.flat(1).length + " points found for " + inputTexts);
       setMarkersList(allCoords.flat(1));
     })();
 
@@ -350,12 +350,12 @@ export default function Home() {
 
     [currentParams, currentValues] = getURLParams();
 
-    // console.log("getting values from URL");
+    // //console.log("getting values from URL");
 
     var newInputTexts = [];
 
     if (currentParams.indexOf("q") > -1) {
-      // console.log("page loaded with queries");
+      // //console.log("page loaded with queries");
 
       var q = getAllIndexes(currentParams, "q");
 
@@ -386,7 +386,7 @@ export default function Home() {
       setUseRegex(true);
       useRe = "true";
     }
-    console.log(`useRe set to ${useRe}`);
+    //console.log(`useRe set to ${useRe}`);
 
     if (currentParams.indexOf("co") > -1) {
       setShowCounties(true);
@@ -403,7 +403,7 @@ export default function Home() {
 
     // const timerId = setTimeout(() => { searchVolumes(newInputTexts, "true") }, 1000);
     // return () => clearTimeout(timerId);
-    console.log(`Searching with: ${useEn}, ${useGa}`);
+    //console.log(`Searching with: ${useEn}, ${useGa}`);
     searchVolumes(newInputTexts, useRe, useEn, useGa, useMixed);
   }, []);
   var x = [];
@@ -505,7 +505,7 @@ export default function Home() {
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution="&copy; <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
                     />
-                    {/* {console.log(languagesIncluded)
+                    {/* {//console.log(languagesIncluded)
                 } */}
                     {
                       markersList.map((currentMarker, i) => (
