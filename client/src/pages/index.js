@@ -29,6 +29,7 @@ export default function Home() {
   const [markersList, setMarkersList] = useState([]);
   const [lastVolumeCalled, setLastVolumeCalled] = useState("");
   const [inputTexts, setInputTexts] = useState([""]);
+  const [dialectCounts, setDialectCounts] = useState([{ "u": 0, "c": 0, "m": 0, "x": 0 }]);
   const [numberOfQueries, setNumberOfQueries] = useState(maxNumberOfQueries);
 
   const [includeEnglish, setIncludeEnglish] = useState(false);
@@ -189,8 +190,10 @@ export default function Home() {
 
       var apiString =
         "https://2-dot-spatial-tempo-386114.ew.r.appspot.com/api?text=";
+      apiString = "http://localhost:5000/api?text=";
       apiString += inputs[0];
-      //"http://localhost:5000/api?text="
+
+
       if (inputs.length > 1) {
         for (var i = 1; i < inputs.length; i++) {
           if (inputs[i] != "") {
@@ -249,6 +252,19 @@ export default function Home() {
       // console.log(jsonResponse);
       console.log("Frontend has received " + jsonResponse.length + " items");
       var tempMarkersList = [];
+
+      var blankDialectInfo = [];
+      for (var i = 0; i < inputTexts.length; i++) {
+        blankDialectInfo.push([{ "u": 0, "c": 0, "m": 0, "x": 0 }]);
+      }
+      setDialectCounts(blankDialectInfo);
+      if (dialectCounts == [null]) {
+        setDialectCounts([{ "u": 0, "c": 0, "m": 0, "x": 0 }]);
+      }
+      // console.log("before looping through items, dialectCounts = " + JSON.stringify(dialectCounts));
+      // // if (dialectCounts[0].length == 1) setDialectCounts(dialectCounts[0]);
+      // console.log("len of first element: " + dialectCounts[0].length);
+      // console.log("fixed, before looping through items: " + JSON.stringify(dialectCounts));
 
       var languagesIncluded = { "en": useEnglish, "ga": useIrish, "mixed": useMixed };
 
@@ -315,6 +331,25 @@ export default function Home() {
 
             for (let foundQuery of foundQueries) {
               markerIcon += "<div style='color: " + markerColours[foundQuery % 10] + "; display: inline'>" + markerSymbols[foundQuery % 10] + "</div>";
+
+              if (dialectCounts[foundQuery]) {
+                var currentDialectCount = dialectCounts[foundQuery]
+                var currentCounty = item.county;
+                console.log("current1 = " + JSON.stringify(dialectCounts));
+                if (currentCounty == "Donegal") {
+                  currentDialectCount["u"] += 1;
+                } else if (currentCounty == "Mayo" || currentCounty == "Galway") {
+                  currentDialectCount["c"] += 1;
+                } else if (currentCounty == "Clare" || currentCounty == "Kerry" || currentCounty == "Cork" || currentCounty == "Waterford") {
+                  currentDialectCount["m"] += 1;
+                } else {
+                  currentDialectCount["x"] += 1;
+                }
+                console.log("current2 = " + JSON.stringify(currentDialectCount));
+                setDialectCounts(dialectCounts => [...dialectCounts.slice(0, foundQuery), currentDialectCount[0], ...dialectCounts.slice(foundQuery + 1)])
+
+                console.log("full list = " + JSON.stringify(dialectCounts));
+              }
             }
             tempMarkersList.push(
               {
@@ -331,6 +366,7 @@ export default function Home() {
 
     (async function () {
       var allCoords = [];
+
       ////console.log("Fetching volume " + item);
       var fetchedItem = await getVolumes(inputs, re, useEn, useGa, useMixed);
       ////console.log("Volume " + item + ": " + fetchedItem.length + " points found for " + inputTexts);
@@ -438,9 +474,22 @@ export default function Home() {
                 ))}
               </tbody>
             </table>
-            <Button disabled={!(inputTexts.length > 1)} onClick={(e) => { e.preventDefault(); if (inputTexts.length > 1) setInputTexts(previousInputTexts => [...previousInputTexts.slice(0, -1)]) }}>-</Button>
-            <Button disabled={!(inputTexts.length < maxNumberOfQueries)} onClick={(e) => { e.preventDefault(); if (inputTexts.length < maxNumberOfQueries) setInputTexts(previousInputTexts => [...previousInputTexts, ""]) }}>+</Button>
+            <Button disabled={!(inputTexts.length > 1)} onClick={(e) => {
+              e.preventDefault(); if (inputTexts.length > 1) {
+                setInputTexts(previousInputTexts => [...previousInputTexts.slice(0, -1)]);
+                // setDialectCounts(dialectCounts => [...dialectCounts.slice(0, -1)]);
+              }
+            }}>-</Button>
+
+            <Button disabled={!(inputTexts.length < maxNumberOfQueries)} onClick={(e) => {
+              e.preventDefault(); if (inputTexts.length < maxNumberOfQueries) {
+                setInputTexts(previousInputTexts => [...previousInputTexts, ""])
+                // setDialectCounts(dialectCounts => [...dialectCounts, { "u": 0, "c": 0, "m": 0, "x": 0 }])
+              }
+            }}>+</Button>
+
             <Button onClick={(e) => { e.preventDefault(); setURLTexts(inputTexts); searchVolumes() }}>Search</Button>
+
             <div style={{ margin: "5px", padding: "5px", alignItems: "center" }}>
               Include results in:
               <br />
@@ -484,6 +533,19 @@ export default function Home() {
           <div style={{ margin: "5px", padding: "5px", fontWeight: "bold" }}>
             {numberOfResultsInfo}
           </div>
+          <div style={{ margin: "5px", padding: "5px" }}>
+            {dialectCounts[0] != null ? dialectCounts.map((query, i) => (
+              <table>
+                <thead><th>{inputTexts[i]}</th></thead>
+                <tbody>
+                  <tr><td>Ulster</td><td>{query["u"]}</td></tr>
+                  <tr><td>Connacht</td><td>{query["c"]}</td></tr>
+                  <tr><td>Munster</td><td>{query["m"]}</td></tr>
+                  <tr><td>Other</td><td>{query["x"]}</td></tr>
+                </tbody>
+              </table>
+            )) : null}
+          </div>
           <div style={{ position: "absolute", bottom: 0, margin: "10px" }}>
             <div style={{ maxWidth: "40%", wordWrap: "break-word" }}>Search 300,000+ pages of Irish folklore and local tradition collected in the 1930s, in English and Irish, and view the results of queries on a map.</div>
             <br />
@@ -501,9 +563,11 @@ export default function Home() {
               <Map className={styles.homeMap} width="750" height="500" center={DEFAULT_CENTER} zoom={7}>
                 {({ TileLayer, Marker, Popup, GeoJSON }) => (
                   <>
-                    <TileLayer
+                    {/* <TileLayer
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution="&copy; <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
+                    /> */}
+                    <TileLayer url="https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=clT0VOTGbCQ1Vv1huB2f" attribution="https://www.maptiler.com/copyright/"
                     />
                     {/* {//console.log(languagesIncluded)
                 } */}
