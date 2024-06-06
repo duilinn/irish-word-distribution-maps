@@ -5,12 +5,13 @@ const http = require("http");
 const querystring = require('node:querystring');
 const fs = require('fs');
 const { match } = require('assert');
+const { parse } = require("csv-parse");
 const PORT = process.env.PORT || 5000;
 const app = express()
 const port = PORT;//5000
 app.use(cors());
 
-const filePath = 'public/volumes_simplified_full.json';
+const filePath = 'public/volumes_simplified_full_counties.json';
 let jsonData = {};
 
 // Read the JSON file
@@ -31,6 +32,28 @@ fs.readFile(filePath, 'utf8', (err, data) => {
         console.error('Error parsing the JSON data:', err);
     }
 });
+
+const data = []
+fs.createReadStream("array_data_unicode.txt")
+    .pipe(parse({ delimiter: ',' }))
+    .on('data', (r) => {
+        // console.log(r);
+        data.push(r);
+    })
+    .on('end', () => {
+        // console.log(data);
+    })
+
+const locationsInfo = []
+fs.createReadStream("locations_info.csv")
+    .pipe(parse({ delimiter: '\t' }))
+    .on('data', (r) => {
+        // console.log(r);
+        locationsInfo.push(r);
+    })
+    .on('end', () => {
+        // console.log(data);
+    })
 
 app.get('/api', cors(), function (req, res) {
     res.set('Access-Control-Allow-Origin', '*');
@@ -106,6 +129,26 @@ app.get('/api', cors(), function (req, res) {
     }
 });
 
+app.get('/maps/:number', cors(), function (req, res) {
+    res.set('Access-Control-Allow-Origin', '*');
+    const { params, query } = req;
+
+    var result = [];
+
+    for (var i = 0; i < 103; i++) {
+        result.push(
+            [
+                data[i][params.number],
+                locationsInfo[i][3],
+                locationsInfo[i][4]
+            ]
+        );
+    }
+
+    // console.log(result);
+    console.log(params.number);
+    res.send(result);
+})
 
 app.listen(port, () => {
     console.log(`Listening on port ${port}`)
