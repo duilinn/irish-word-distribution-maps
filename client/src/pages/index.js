@@ -190,7 +190,7 @@ export default function Home() {
 
       var apiString =
         "https://2-dot-spatial-tempo-386114.ew.r.appspot.com/api?text=";
-      apiString = "http://localhost:5000/api?text=";
+      // apiString = "http://localhost:5000/api?text=";
       apiString += inputs[0];
 
 
@@ -563,12 +563,12 @@ export default function Home() {
               <Map className={styles.homeMap} width="750" height="500" center={DEFAULT_CENTER} zoom={7}>
                 {({ TileLayer, Marker, Popup, GeoJSON }) => (
                   <>
-                    {/* <TileLayer
+                    <TileLayer
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution="&copy; <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
-                    /> */}
-                    <TileLayer url="https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=clT0VOTGbCQ1Vv1huB2f" attribution="https://www.maptiler.com/copyright/"
                     />
+                    {/* <TileLayer url="https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=clT0VOTGbCQ1Vv1huB2f" attribution="https://www.maptiler.com/copyright/"
+                    /> */}
                     {/* {//console.log(languagesIncluded)
                 } */}
                     {

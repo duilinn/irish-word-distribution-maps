@@ -135,7 +135,7 @@ app.get('/maps/:number', cors(), function (req, res) {
 
     var result = [];
 
-    for (var i = 0; i < 114; i++) {
+    for (var i = 0; i < 119; i++) {
         result.push(
             [
                 data[i][params.number],
@@ -145,7 +145,6 @@ app.get('/maps/:number', cors(), function (req, res) {
         );
     }
 
-    // console.log(result);
     console.log(params.number);
     res.send(result);
 })

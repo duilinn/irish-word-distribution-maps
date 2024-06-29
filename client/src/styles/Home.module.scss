@@ -31,13 +31,23 @@
 }
 
 .sidebar {
-  width: 50%;
+  width: 30%;
   min-height: 100%;
-  min-width: 50%;
+  min-width: 30%;
   background-color: aliceblue;
   margin: 0px;
   padding: 20px 20px;
+  // position: fixed;
+  // top: 0;
+  // left: 0;
+  overflow: scroll;
 }
+
+// .mainPage {
+//   position: fixed;
+//   bottom: 0;
+//   left: 35%;
+// }
 
 .navButton {
   min-width: 100px;
@@ -105,4 +115,21 @@
 
 .mainMap .italicText {
   font-style: italic;
+}
+
+.greyItalics {
+  color: gray;
+  font-style: italic;
+}
+
+.greyItalics .currentMap {
+  color: #404040;
+}
+
+.standardFormHeader {
+  max-height: 100px;
+  // min-height: 50px;  
+  height: 100px;
+  overflow: scroll
+  // background-color: pink;
 }
