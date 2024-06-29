@@ -38,6 +38,9 @@ yarn-error.log*
 *.bat
 /server/sqlPassword.js
 
+# lasid data
+/server/public/lasid/
+
 #ignoring .next (large files)
 /client/.next
 /client/public/gaeltacht*

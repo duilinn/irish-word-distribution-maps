@@ -34,7 +34,7 @@ fs.readFile(filePath, 'utf8', (err, data) => {
 });
 
 const data = []
-fs.createReadStream("array_data_unicode.txt")
+fs.createReadStream("public/lasid/array_data_unicode.txt")
     .pipe(parse({ delimiter: ',' }))
     .on('data', (r) => {
         // console.log(r);
@@ -45,7 +45,7 @@ fs.createReadStream("array_data_unicode.txt")
     })
 
 const locationsInfo = []
-fs.createReadStream("locations_info.csv")
+fs.createReadStream("public/lasid/locations_info.csv")
     .pipe(parse({ delimiter: '\t' }))
     .on('data', (r) => {
         // console.log(r);
@@ -135,7 +135,7 @@ app.get('/maps/:number', cors(), function (req, res) {
 
     var result = [];
 
-    for (var i = 0; i < 103; i++) {
+    for (var i = 0; i < 114; i++) {
         result.push(
             [
                 data[i][params.number],
