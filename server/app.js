@@ -6,10 +6,14 @@ const querystring = require('node:querystring');
 const fs = require('fs');
 const { match } = require('assert');
 const { parse } = require("csv-parse");
+const process = require('process')
 const PORT = process.env.PORT || 5000;
 const app = express()
 const port = PORT;//5000
-app.use(cors());
+const path = require('path');
+
+// app.use(cors({origin: 'https://duilinn.github.io/ria-corpus-search.html'}));
+// app.use(cors());
 
 const filePath = 'public/volumes_simplified_full_counties.json';
 let jsonData = {};
@@ -44,6 +48,28 @@ fs.createReadStream("public/lasid/array_data_unicode.txt")
         // console.log(data);
     })
 
+const lasidLongData = []
+fs.createReadStream("public/lasid/lasid_long.csv")
+    .pipe(parse({ delimiter: ',' }))
+    .on('data', (r) => {
+        // console.log(r);
+        lasidLongData.push(r);
+    })
+    .on('end', () => {
+        // console.log(data);
+    })
+
+const lasidShortIndex = []
+fs.createReadStream("public/lasid/lasid_short_index.csv")
+    .pipe(parse({ delimiter: '\t' }))
+    .on('data', (r) => {
+        // console.log(r);
+        lasidShortIndex.push(r);
+    })
+    .on('end', () => {
+        // console.log(data);
+    })
+
 const locationsInfo = []
 fs.createReadStream("public/lasid/locations_info.csv")
     .pipe(parse({ delimiter: '\t' }))
@@ -54,6 +80,24 @@ fs.createReadStream("public/lasid/locations_info.csv")
     .on('end', () => {
         // console.log(data);
     })
+
+const placenameTranscriptions = []
+fs.createReadStream("public/transcriptions.csv")
+    .pipe(parse({ delimiter: ',' }))
+    .on('data', (r) => {
+        // console.log(r);
+        placenameTranscriptions.push(r);
+    })
+    .on('end', () => {
+        // console.log(data);
+    })
+
+app.get('/transcriptions', cors(), function (req, res) {
+    res.set('Access-Control-Allow-Origin', '*');
+    const { params, query } = req;
+    console.log(params.number);
+    res.send(placenameTranscriptions);
+})
 
 app.get('/api', cors(), function (req, res) {
     res.set('Access-Control-Allow-Origin', '*');
@@ -129,19 +173,33 @@ app.get('/api', cors(), function (req, res) {
     }
 });
 
+//lasid vol i
 app.get('/maps/:number', cors(), function (req, res) {
     res.set('Access-Control-Allow-Origin', '*');
     const { params, query } = req;
-
+    const numberOfPoints = 123;
     var result = [];
 
-    for (var i = 0; i < 119; i++) {
+    mapColNumber = lasidShortIndex.map(r => r[0]).indexOf(params.number);
+    for (var i = 0; i < numberOfPoints; i++) {
+        pointId = locationsInfo[i][0];
+        pointLat = locationsInfo[i][3];
+        pointLon = locationsInfo[i][4];
+        pointData = data[i][mapColNumber];
+
+        if (i<99 || (i==103) || (i==121) || (i==122) || (i==123)) {
+            dialectStatus = locationsInfo[i][5].trim();
+        } else {
+            dialectStatus = "extra";
+        }
         result.push(
-            [
-                data[i][params.number],
-                locationsInfo[i][3],
-                locationsInfo[i][4]
-            ]
+            {
+                "pointData": pointData,
+                "lat": pointLat,
+                "lon": pointLon,
+                "pointId": pointId,
+                "dialectStatus": dialectStatus
+            }
         );
     }
 
@@ -149,6 +207,97 @@ app.get('/maps/:number', cors(), function (req, res) {
     res.send(result);
 })
 
+//lasid vols ii-iv
+app.get('/mapsLong/:number', cors(), function (req, res) {
+    //number = english questionnaire number
+    res.set('Access-Control-Allow-Origin', '*');
+    const { params, query } = req;
+    const numberOfPoints = 96;
+    var result = [];
+    answerNumber = lasidLongData.map(r => r[0]).indexOf(params.number) - 1;
+    console.log(`questionnaire number ${params.number} is question number ${answerNumber}`)
+    for (var i = 0; i < numberOfPoints; i++) {
+        pointId = lasidLongData[0][i + 3].split("-")[0].slice(6).trim()
+        currentLocationInfo = locationsInfo.filter((r) => r[0].toLowerCase() == pointId.toLowerCase())[0];
+        pointData = lasidLongData[answerNumber + 1][i + 3];
+        if (pointData.length > 0) {
+            console.log(`pointData = ${pointData}`);
+            result.push(
+                {
+                    "pointData": lasidLongData[answerNumber + 1][i + 3],
+                    "lat": currentLocationInfo[3],
+                    "lon": currentLocationInfo[4],
+                    "pointId": pointId
+                }
+            );
+        }
+    }
+
+    console.log("long lasid number: " + params.number);
+    res.send(result);
+})
+
+
+app.get('/corpasria', cors(), function (req, res) {
+    req.socket.setTimeout(60000);
+    res.set('Access-Control-Allow-Origin', 'https://duilinn.github.io');
+    res.type("text");
+    // res.setHeader("Content-Security-Policy", "style-src-attr 'sha256-pILX+5FGCpLRHvNBgtABIdSMmytrYudGxJBUYXY1t0s=' 'unsafe-hashes';")
+    console.log("ria corpus request received");
+    const { params, query } = req;
+    // res.send("test text");
+    var spawn = require("child_process").spawn;
+    console.log(require('path').dirname(require.main.filename));
+    var process = spawn('python', ["./corpasria.py", query.q]);
+    process.stdout.on('data', function (data) {
+        console.log(`Data sent: ${data.toString()}`);
+        res.send("python script finished");
+
+    });
+})
+
 app.listen(port, () => {
     console.log(`Listening on port ${port}`)
+})
+
+
+// const lasidInfoAll = []
+// fs.createReadStream("public/all-lasid-maps-index.csv")
+//     .pipe(parse({ delimiter: ',' }))
+//     .on('data', (r) => {
+//         // console.log(r);
+//         lasidInfoAll.push(r);
+//     })
+//     .on('end', () => {
+//         // console.log(data);
+//     })
+
+app.get('/lasid-info-all', cors(), function (req, res) {
+    res.set('Access-Control-Allow-Origin', '*');
+    const { params, query } = req;
+    console.log(params.number);
+    // lasidInfoAll.plus
+    lasidInfoAll = [];
+
+    for (let i = 0; i < lasidShortIndex.length; i++) {
+        currentRow = {
+            "surveyType": "Short",
+            "mapNo": lasidShortIndex[i][0],
+            "volIEquivalent": "—",
+            "english": lasidShortIndex[i][1],
+            "gaelic": lasidShortIndex[i][2]
+        }
+        lasidInfoAll.push(currentRow);
+    }
+    for (let i = 1; i < lasidLongData.length; i++) {
+        currentRow = {
+            "surveyType": "Long",
+            "mapNo": lasidLongData[i][0],
+            "volIEquivalent": lasidLongData[i][1],
+            "english": lasidLongData[i][2],
+            "gaelic": ""
+        }
+        lasidInfoAll.push(currentRow);
+    }
+    res.send(lasidInfoAll);
 })

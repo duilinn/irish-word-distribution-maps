@@ -116,6 +116,7 @@ const locations_info = [["1","Waterford","An Rinn","52.0488","-7.56691","yes","1
 ["mn2","Monaghan","Domhnach Maighean","54.0072","-6.70224","no","116","Wagner, H., & O’Boyle, C. (1982). Linguistic atlas and survey of Irish dialects. vol. IV, the dialects of Ulster and the Isle of Man. specimens of scottish gaelic dialects. phonetic texts of east ulster Irish. Dublin Institute for Advanced Studies. "],
 ["mo1","Mayo","Tobar na bhFiann","54.0065","-9.31703","no","117","Ó Máílle, Tomás (1927). Urlabhraidheacht. "],
 ["rc1","Roscommon","Béal Átha Fearnáin","54.0727","-8.20661","no","118","Ó Máílle, Tomás (1927). Urlabhraidheacht. "],
-["so1","Sligo","An Ghaobhach","54.0928","-8.24456","no","119","Ó Máílle, Tomás (1927). Urlabhraidheacht. "]];
-
+["so1","Sligo","An Ghaobhach","54.0928","-8.24456","no","119","Ó Máílle, Tomás (1927). Urlabhraidheacht. "],
+["mh5","Meath","Baile Íomhair","53.5328122","-6.9647861","no","120","Conway (Margaret) (comp.): A south Meath glossary. In Ríocht na Midhe 2, no. 2, 1960, pp. 69–72; 2, no. 3, 1961, pp. 57–9."],
+["mh6","Meath","Damhliag","53.6563370","-6.4147493","no","120", "O Boyle (Enda): Words and expressions from the Duleek area. In RíM 14 (2003), pp. 242–259, 15 (2004), pp. 199–214. Dialect word-list containing some elements of Irish origin."]];
 export default locations_info;

@@ -44,3 +44,7 @@ yarn-error.log*
 #ignoring .next (large files)
 /client/.next
 /client/public/gaeltacht*
+
+/other/
+
+/client/public/chromedriver.exe
