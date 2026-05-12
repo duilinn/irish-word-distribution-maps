@@ -59,6 +59,17 @@ fs.createReadStream("public/lasid/lasid_long.csv")
         // console.log(data);
     })
 
+const scotlandLasidIData = []
+fs.createReadStream("public/lasid/scotland_lasid_i_data.csv")
+    .pipe(parse({ delimiter: ',' }))
+    .on('data', (r) => {
+        // console.log(r);
+        scotlandLasidIData.push(r);
+    })
+    .on('end', () => {
+        // console.log(data);
+    })
+
 const lasidShortIndex = []
 fs.createReadStream("public/lasid/lasid_short_index.csv")
     .pipe(parse({ delimiter: '\t' }))
@@ -177,21 +188,23 @@ app.get('/api', cors(), function (req, res) {
 app.get('/maps/:number', cors(), function (req, res) {
     res.set('Access-Control-Allow-Origin', '*');
     const { params, query } = req;
-    const numberOfPoints = 123;
     var result = [];
+    let numberOfPointsAll = 124;
 
-    mapColNumber = lasidShortIndex.map(r => r[0]).indexOf(params.number);
-    for (var i = 0; i < numberOfPoints; i++) {
+    mapColNumber = lasidShortIndex.map(r => stripInitialZeros(r[0])).indexOf(params.number);
+    for (var i = 0; i < numberOfPointsAll; i++) {
         pointId = locationsInfo[i][0];
+
         pointLat = locationsInfo[i][3];
         pointLon = locationsInfo[i][4];
-        pointData = data[i][mapColNumber];
-
-        if (i<99 || (i==103) || (i==121) || (i==122) || (i==123)) {
-            dialectStatus = locationsInfo[i][5].trim();
+        console.log("point!" + pointId);
+        if (["a", "b", "c", "d", "e", "f", "g"].includes(pointId.toLowerCase().trim())) {
+            pointData = scotlandLasidIData[mapColNumber + 1][(i - 92) + 3];
         } else {
-            dialectStatus = "extra";
+            pointData = data[i][mapColNumber];
         }
+        
+        dialectStatus = locationsInfo[i][5].trim();
         result.push(
             {
                 "pointData": pointData,
@@ -227,7 +240,8 @@ app.get('/mapsLong/:number', cors(), function (req, res) {
                     "pointData": lasidLongData[answerNumber + 1][i + 3],
                     "lat": currentLocationInfo[3],
                     "lon": currentLocationInfo[4],
-                    "pointId": pointId
+                    "pointId": pointId,
+                    "dialectStatus": currentLocationInfo[5].trim()
                 }
             );
         }
@@ -237,6 +251,28 @@ app.get('/mapsLong/:number', cors(), function (req, res) {
     res.send(result);
 })
 
+app.get('/all-points-info', cors(), function (req, res) {
+    //number = english questionnaire number
+    res.set('Access-Control-Allow-Origin', '*');
+    const { params, query } = req;
+    var result = [];
+    let numberOfPointsAll = 124;
+    for (var i = 0; i < numberOfPointsAll; i++) {
+        pointId = locationsInfo[i][0];  
+        currentLocationInfo = locationsInfo[i];
+        let pointInfoString = `Point ${currentLocationInfo[0]}: ${currentLocationInfo[2]}, ${currentLocationInfo[1]}\nSource: ${currentLocationInfo[7]}`;
+        result.push(
+            {
+                "pointData": pointInfoString,
+                "lat": currentLocationInfo[3],
+                "lon": currentLocationInfo[4],
+                "pointId": pointId,
+                "dialectStatus": currentLocationInfo[5].trim()
+            }
+        );
+    }
+    res.send(result);
+})
 
 app.get('/corpasria', cors(), function (req, res) {
     req.socket.setTimeout(60000);
@@ -272,6 +308,14 @@ app.listen(port, () => {
 //         // console.log(data);
 //     })
 
+function stripInitialZeros(numStr) {
+    if (numStr.length == 0) return num;
+    while (numStr[0] == "0" && numStr.length > 1) {
+        numStr = numStr.slice(1);
+    }
+    return numStr
+}
+
 app.get('/lasid-info-all', cors(), function (req, res) {
     res.set('Access-Control-Allow-Origin', '*');
     const { params, query } = req;
@@ -282,7 +326,7 @@ app.get('/lasid-info-all', cors(), function (req, res) {
     for (let i = 0; i < lasidShortIndex.length; i++) {
         currentRow = {
             "surveyType": "Short",
-            "mapNo": lasidShortIndex[i][0],
+            "mapNo": stripInitialZeros(lasidShortIndex[i][0]),
             "volIEquivalent": "—",
             "english": lasidShortIndex[i][1],
             "gaelic": lasidShortIndex[i][2]
