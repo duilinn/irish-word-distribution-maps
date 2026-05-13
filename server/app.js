@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 5000;
 const app = express()
 const port = PORT;//5000
 const path = require('path');
+const { convertProcessSignalToExitCode } = require('node:util');
 
 // app.use(cors({origin: 'https://duilinn.github.io/ria-corpus-search.html'}));
 // app.use(cors());
@@ -203,7 +204,7 @@ app.get('/maps/:number', cors(), function (req, res) {
         } else {
             pointData = data[i][mapColNumber];
         }
-        
+
         dialectStatus = locationsInfo[i][5].trim();
         result.push(
             {
@@ -230,8 +231,8 @@ app.get('/mapsLong/:number', cors(), function (req, res) {
     answerNumber = lasidLongData.map(r => r[0]).indexOf(params.number) - 1;
     console.log(`questionnaire number ${params.number} is question number ${answerNumber}`)
     for (var i = 0; i < numberOfPoints; i++) {
-        pointId = lasidLongData[0][i + 3].split("-")[0].slice(6).trim()
-        currentLocationInfo = locationsInfo.filter((r) => r[0].toLowerCase() == pointId.toLowerCase())[0];
+        let pointId = lasidLongData[0][i + 3].split("-")[0].slice(6).trim()
+        let currentLocationInfo = locationsInfo.filter((r) => r[0].toLowerCase() == pointId.toLowerCase())[0];
         pointData = lasidLongData[answerNumber + 1][i + 3];
         if (pointData.length > 0) {
             console.log(`pointData = ${pointData}`);
@@ -251,6 +252,67 @@ app.get('/mapsLong/:number', cors(), function (req, res) {
     res.send(result);
 })
 
+app.get('/transcriptions-search/:searchString', cors(), function (req, res) {
+    //number = english questionnaire number
+    res.set('Access-Control-Allow-Origin', '*');
+    const { params, query } = req;
+    let processedSearchString = decodeURIComponent(params.searchString).trim().toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    console.log(`searching for ${processedSearchString}`);
+    
+    var result = [];
+    let shortSurveyPointsCount = 124;
+
+    for (var i = 0; i < shortSurveyPointsCount; i++) {
+        let currentLocationInfo = locationsInfo[i];
+        for (var j = 0; j < data[i].length; j++) {
+            if (data[i][j].toLowerCase().trim().toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(processedSearchString)) {
+
+                result.push(
+                    {
+                        "pointData": data[i][j],
+                        "lat": currentLocationInfo[3],
+                        "lon": currentLocationInfo[4],
+                        "pointId": currentLocationInfo[0],
+                        "dialectStatus": currentLocationInfo[5].trim(),
+                        "mapNumber": lasidShortIndex[j][0],
+                        "surveyType": "short"
+                    }
+                );
+            }
+        }
+    }
+
+    let longSurveyPointsCount = 96;
+
+    for (var i = 0; i < longSurveyPointsCount; i++) {
+        let pointId = lasidLongData[0][i + 3].split("-")[0].slice(6).trim()
+        currentLocationInfo = locationsInfo.filter((r) => r[0].toLowerCase() == pointId.toLowerCase())[0];
+        for (var j = 0; j < lasidLongData.length-1; j++) {
+            // console.log("lasid long, ")
+            if (lasidLongData[j+1][i+3].toLowerCase().trim().toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(processedSearchString)) {
+
+                result.push(
+                    {
+                        "pointData": lasidLongData[j+1][i+3],
+                        "lat": currentLocationInfo[3],
+                        "lon": currentLocationInfo[4],
+                        "pointId": pointId,
+                        "dialectStatus": currentLocationInfo[5].trim(),
+                        "mapNumber": lasidLongData[j+1][0],
+                        "surveyType": "long"
+                    }
+                );
+            }
+        }
+    }
+
+    res.send(result);
+})
+
+
 app.get('/all-points-info', cors(), function (req, res) {
     //number = english questionnaire number
     res.set('Access-Control-Allow-Origin', '*');
@@ -258,7 +320,7 @@ app.get('/all-points-info', cors(), function (req, res) {
     var result = [];
     let numberOfPointsAll = 124;
     for (var i = 0; i < numberOfPointsAll; i++) {
-        pointId = locationsInfo[i][0];  
+        pointId = locationsInfo[i][0];
         currentLocationInfo = locationsInfo[i];
         let pointInfoString = `Point ${currentLocationInfo[0]}: ${currentLocationInfo[2]}, ${currentLocationInfo[1]}\nSource: ${currentLocationInfo[7]}`;
         result.push(
