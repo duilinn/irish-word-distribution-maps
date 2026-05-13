@@ -249,7 +249,6 @@ app.get('/mapsLong/:number', cors(), function (req, res) {
     }
 
     console.log("long lasid number: " + params.number);
-    res.send(result);
 })
 
 app.get('/transcriptions-search/:searchString', cors(), function (req, res) {
@@ -259,7 +258,7 @@ app.get('/transcriptions-search/:searchString', cors(), function (req, res) {
     let processedSearchString = decodeURIComponent(params.searchString).trim().toLowerCase()
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     console.log(`searching for ${processedSearchString}`);
-    
+
     var result = [];
     let shortSurveyPointsCount = 124;
 
@@ -289,19 +288,19 @@ app.get('/transcriptions-search/:searchString', cors(), function (req, res) {
     for (var i = 0; i < longSurveyPointsCount; i++) {
         let pointId = lasidLongData[0][i + 3].split("-")[0].slice(6).trim()
         currentLocationInfo = locationsInfo.filter((r) => r[0].toLowerCase() == pointId.toLowerCase())[0];
-        for (var j = 0; j < lasidLongData.length-1; j++) {
+        for (var j = 0; j < lasidLongData.length - 1; j++) {
             // console.log("lasid long, ")
-            if (lasidLongData[j+1][i+3].toLowerCase().trim().toLowerCase()
+            if (lasidLongData[j + 1][i + 3].toLowerCase().trim().toLowerCase()
                 .normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(processedSearchString)) {
 
                 result.push(
                     {
-                        "pointData": lasidLongData[j+1][i+3],
+                        "pointData": lasidLongData[j + 1][i + 3],
                         "lat": currentLocationInfo[3],
                         "lon": currentLocationInfo[4],
                         "pointId": pointId,
                         "dialectStatus": currentLocationInfo[5].trim(),
-                        "mapNumber": lasidLongData[j+1][0],
+                        "mapNumber": lasidLongData[j + 1][0],
                         "surveyType": "long"
                     }
                 );
@@ -309,9 +308,12 @@ app.get('/transcriptions-search/:searchString', cors(), function (req, res) {
         }
     }
 
-    res.send(result);
+    if (result.length > 1000) {
+        res.send(["error", "Too many results found (>1000)"]);
+    } else {
+        res.send(result);
+    }
 })
-
 
 app.get('/all-points-info', cors(), function (req, res) {
     //number = english questionnaire number
@@ -371,39 +373,39 @@ app.listen(port, () => {
 //     })
 
 function stripInitialZeros(numStr) {
-    if (numStr.length == 0) return num;
-    while (numStr[0] == "0" && numStr.length > 1) {
-        numStr = numStr.slice(1);
+        if (numStr.length == 0) return num;
+        while (numStr[0] == "0" && numStr.length > 1) {
+            numStr = numStr.slice(1);
+        }
+        return numStr
     }
-    return numStr
-}
 
 app.get('/lasid-info-all', cors(), function (req, res) {
-    res.set('Access-Control-Allow-Origin', '*');
-    const { params, query } = req;
-    console.log(params.number);
-    // lasidInfoAll.plus
-    lasidInfoAll = [];
+        res.set('Access-Control-Allow-Origin', '*');
+        const { params, query } = req;
+        console.log(params.number);
+        // lasidInfoAll.plus
+        lasidInfoAll = [];
 
-    for (let i = 0; i < lasidShortIndex.length; i++) {
-        currentRow = {
-            "surveyType": "Short",
-            "mapNo": stripInitialZeros(lasidShortIndex[i][0]),
-            "volIEquivalent": "—",
-            "english": lasidShortIndex[i][1],
-            "gaelic": lasidShortIndex[i][2]
+        for (let i = 0; i < lasidShortIndex.length; i++) {
+            currentRow = {
+                "surveyType": "Short",
+                "mapNo": stripInitialZeros(lasidShortIndex[i][0]),
+                "volIEquivalent": "—",
+                "english": lasidShortIndex[i][1],
+                "gaelic": lasidShortIndex[i][2]
+            }
+            lasidInfoAll.push(currentRow);
         }
-        lasidInfoAll.push(currentRow);
-    }
-    for (let i = 1; i < lasidLongData.length; i++) {
-        currentRow = {
-            "surveyType": "Long",
-            "mapNo": lasidLongData[i][0],
-            "volIEquivalent": lasidLongData[i][1],
-            "english": lasidLongData[i][2],
-            "gaelic": ""
+        for (let i = 1; i < lasidLongData.length; i++) {
+            currentRow = {
+                "surveyType": "Long",
+                "mapNo": lasidLongData[i][0],
+                "volIEquivalent": lasidLongData[i][1],
+                "english": lasidLongData[i][2],
+                "gaelic": ""
+            }
+            lasidInfoAll.push(currentRow);
         }
-        lasidInfoAll.push(currentRow);
-    }
-    res.send(lasidInfoAll);
-})
+        res.send(lasidInfoAll);
+    })
